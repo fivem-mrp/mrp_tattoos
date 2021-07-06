@@ -5,10 +5,10 @@ local opacity = 1
 local scaleType = nil
 local scaleString = ""
 
-ESX = nil
+MRP = nil
 Citizen.CreateThread(function()
-	while ESX == nil do
-		TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
+	while MRP == nil do
+		TriggerEvent('mrp:getSharedObject', function(obj) MRP = obj end)
 		Citizen.Wait(0)
 	end
 end)
@@ -26,29 +26,18 @@ Citizen.CreateThread(function()
 	end
 end)
 
-AddEventHandler('skinchanger:modelLoaded', function()
-	ESX.TriggerServerCallback('SmallTattoos:GetPlayerTattoos', function(tattooList)
-		if tattooList then
-			ClearPedDecorations(PlayerPedId())
-			for k, v in pairs(tattooList) do
-				if v.Count ~= nil then
-					for i = 1, v.Count do
-						SetPedDecoration(PlayerPedId(), v.collection, v.nameHash)
-					end
-				else
-					SetPedDecoration(PlayerPedId(), v.collection, v.nameHash)
-				end
-			end
-			currentTattoos = tattooList
-		end
-	end)
+RegisterNetEvent('mrp:spawn')
+AddEventHandler('mrp:spawn', function(characterToUse, spawnIdx)
+    if characterToUse ~= nil and characterToUse.tattoos ~= nil then
+        currentTattoos = characterToUse.tattoos
+    end
 end)
 
 Citizen.CreateThread(function()
 	while true do
 		Citizen.Wait(300000)
 		if not IsMenuOpen() then
-			ESX.TriggerServerCallback('SmallTattoos:GetPlayerTattoos', function(tattooList)
+			MRP.TriggerServerCallback('SmallTattoos:GetPlayerTattoos', {}, function(tattooList)
 				if tattooList then
 					ClearPedDecorations(PlayerPedId())
 					for k, v in pairs(tattooList) do
@@ -83,50 +72,127 @@ function DrawTattoo(collection, name)
 	end
 end
 
+local lastSkin = nil
 function GetNaked()
-	TriggerEvent('skinchanger:getSkin', function()
-		if GetEntityModel(PlayerPedId()) == `mp_m_freemode_01` then
-			TriggerEvent('skinchanger:loadSkin', {
-				sex      = 0,
-				tshirt_1 = 15,
-				tshirt_2 = 0,
-				arms     = 15,
-				torso_1  = 91,
-				torso_2  = 0,
-				pants_1  = 14,
-				pants_2  = 0,
-				shoes_1 = 5,
-				glasses_1 = 0
-			})
-		else
-			TriggerEvent('skinchanger:loadSkin', {
-				sex      = 1,
-				tshirt_1 = 34,
-				tshirt_2 = 0,
-				arms     = 15,
-				torso_1  = 101,
-				torso_2  = 1,
-				pants_1  = 16,
-				pants_2  = 0,
-				shoes_1 = 5,
-				glasses_1 = 5
-			})
-		end
-	end)
+    local ped = PlayerPedId()
+    lastSkin = exports['fivem-appearance']:getPedComponents(ped)
+    if GetEntityModel(PlayerPedId()) == `mp_m_freemode_01` then
+        exports['fivem-appearance']:setPedComponents(ped, {{
+            component_id = 0,
+            drawable = 0,
+            texture = 0,
+        }, {
+            component_id = 1,
+            drawable = 0,
+            texture = 0,
+        }, {
+            component_id = 2,
+            drawable = 13,
+            texture = 0,
+        }, {
+            component_id = 3,
+            drawable = 15,
+            texture = 0,
+        }, {
+            component_id = 4,
+            drawable = 61,
+            texture = 0,
+        }, {
+            component_id = 5,
+            drawable = 0,
+            texture = 0,
+        }, {
+            component_id = 6,
+            drawable = 5,
+            texture = 0,
+        }, {
+            component_id = 7,
+            drawable = 0,
+            texture = 0,
+        }, {
+            component_id = 8,
+            drawable = -1,
+            texture = 0,
+        }, {
+            component_id = 9,
+            drawable = 0,
+            texture = 0,
+        }, {
+            component_id = 10,
+            drawable = 0,
+            texture = 0,
+        }, {
+            component_id = 11,
+            drawable = -1,
+            texture = 0,
+        }})
+    else
+        exports['fivem-appearance']:setPedComponents(ped, {{
+            component_id = 0,
+            drawable = 0,
+            texture = 0,
+        }, {
+            component_id = 1,
+            drawable = 0,
+            texture = 0,
+        }, {
+            component_id = 2,
+            drawable = 3,
+            texture = 0,
+        }, {
+            component_id = 3,
+            drawable = 15,
+            texture = 0,
+        }, {
+            component_id = 4,
+            drawable = 15,
+            texture = 0,
+        }, {
+            component_id = 5,
+            drawable = 0,
+            texture = 0,
+        }, {
+            component_id = 6,
+            drawable = 5,
+            texture = 0,
+        }, {
+            component_id = 7,
+            drawable = 0,
+            texture = 0,
+        }, {
+            component_id = 8,
+            drawable = -1,
+            texture = 0,
+        }, {
+            component_id = 9,
+            drawable = 0,
+            texture = 0,
+        }, {
+            component_id = 10,
+            drawable = 0,
+            texture = 0,
+        }, {
+            component_id = 11,
+            drawable = 15,
+            texture = 0,
+        }})
+    end
 end
 
 function ResetSkin()
-	ESX.TriggerServerCallback('esx_skin:getPlayerSkin', function(skin)
-		TriggerEvent('skinchanger:loadSkin', skin)
-	end)
-	ClearPedDecorations(PlayerPedId())
+    local ped = PlayerPedId()
+    if lastSkin ~= nil then
+        exports['fivem-appearance']:setPedComponents(ped, lastSkin)
+        lastSkin = nil
+    end
+	ClearPedDecorations(ped)
 	for k, v in pairs(currentTattoos) do
 		if v.Count ~= nil then
 			for i = 1, v.Count do
-				SetPedDecoration(PlayerPedId(), v.collection, v.nameHash)
+				SetPedDecoration(ped, v.collection, v.nameHash)
 			end
 		else
-			SetPedDecoration(PlayerPedId(), v.collection, v.nameHash)
+			SetPedDecoration(ped, v.collection, v.nameHash)
 		end
 	end
 end
@@ -164,11 +230,11 @@ function IsMenuOpen()
 end
 
 function BuyTattoo(collection, name, label, price)
-	ESX.TriggerServerCallback('SmallTattoos:PurchaseTattoo', function(success)
+	MRP.TriggerServerCallback('SmallTattoos:PurchaseTattoo', {currentTattoos, price, {collection = collection, nameHash = name, Count = opacity}, GetLabelText(label)}, function(success)
 		if success then
 			table.insert(currentTattoos, {collection = collection, nameHash = name, Count = opacity})
 		end
-	end, currentTattoos, price, {collection = collection, nameHash = name, Count = opacity}, GetLabelText(label))
+	end)
 end
 
 function RemoveTattoo(name, label)
@@ -178,7 +244,10 @@ function RemoveTattoo(name, label)
 		end
 	end
 	TriggerServerEvent("SmallTattoos:RemoveTattoo", currentTattoos)
-	ESX.ShowNotification("You have removed the ~y~" .. GetLabelText(label) .. "~s~ tattoo")
+    TriggerEvent('chat:addMessage', source, {
+        template = '<div class="chat-message nonemergency">{0}</div>',
+        args = {"You have removed the " .. GetLabelText(label) .. " tattoo"}
+    })
 end
 
 function CreateScale(sType)
